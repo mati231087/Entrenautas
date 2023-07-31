@@ -1,23 +1,27 @@
 from django.shortcuts import render, redirect
-from .forms import RegistroForm
+from .forms import UsuarioCreationForm  
 from django.contrib.auth import authenticate, login, logout
-
 
 def registro(request):
     if request.method == 'POST':
-        form = RegistroForm(request.POST)
+        form = UsuarioCreationForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('login')
+            email = form.cleaned_data.get('email')
+            raw_password = form.cleaned_data.get('password1')
+            user = authenticate(request, email=email, password=raw_password)
+            if user is not None:
+                login(request, user)
+                return redirect('home')
     else:
-        form = RegistroForm()
+        form = UsuarioCreationForm()
     return render(request, 'usuarios/registro.html', {'form': form})
 
 def login_view(request):
     if request.method == 'POST':
-        username = request.POST['username']
+        email = request.POST['email']
         password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
+        user = authenticate(request, email=email, password=password)
         if user is not None:
             login(request, user)
             return redirect('home')
@@ -29,4 +33,3 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('home')
-# Create your views here.
